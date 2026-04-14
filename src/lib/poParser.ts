@@ -1,4 +1,4 @@
-import ExcelJS from "exceljs";
+import type { Worksheet } from "exceljs";
 import type { ParsedPOFile, ParsedPOLine, POType } from "../types";
 import { compactId } from "./format";
 import {
@@ -11,6 +11,7 @@ import {
 type Matrix = unknown[][];
 
 export async function parsePOBuffer(buffer: ArrayBuffer, fileName: string): Promise<ParsedPOFile> {
+  const ExcelJS = await import("exceljs");
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer);
   const worksheet = workbook.worksheets[0];
@@ -58,9 +59,9 @@ function detectPOType(matrix: Matrix, fileName: string): POType {
 }
 
 function parseJSSample(matrix: Matrix, fileName: string): ParsedPOLine[] {
-  const poNumber = text(cell(matrix, 8, 2)).replace(/^PO#/, "");
-  const issuedDate = toISODate(cell(matrix, 6, 2));
-  const shipTo = text(cell(matrix, 10, 8)) || text(cell(matrix, 10, 7));
+  const poNumber = text(cell(matrix, 9, 2)).replace(/^PO#/, "");
+  const issuedDate = toISODate(cell(matrix, 7, 2));
+  const shipTo = text(cell(matrix, 11, 8)) || text(cell(matrix, 11, 7));
   const headerIndex = matrix.findIndex((row) => rowText(row).includes("FILE NO"));
   const lines: ParsedPOLine[] = [];
 
@@ -108,12 +109,12 @@ function parseJSSample(matrix: Matrix, fileName: string): ParsedPOLine[] {
 }
 
 function parseJSBulk(matrix: Matrix, fileName: string): ParsedPOLine[] {
-  const poNumber = text(cell(matrix, 8, 3));
-  const issuedDate = toISODate(cell(matrix, 7, 3));
-  const dueDate = toISODate(cell(matrix, 7, 11));
-  const shipTo = text(cell(matrix, 8, 11));
-  const paymentTerms = text(cell(matrix, 10, 11)) || "CASH60";
-  const attention = text(cell(matrix, 11, 3));
+  const poNumber = text(cell(matrix, 9, 3));
+  const issuedDate = toISODate(cell(matrix, 8, 3));
+  const dueDate = toISODate(cell(matrix, 8, 11));
+  const shipTo = text(cell(matrix, 9, 11));
+  const paymentTerms = text(cell(matrix, 11, 11)) || "CASH60";
+  const attention = text(cell(matrix, 12, 3));
   const factory = normalizeFactory(shipTo);
   const headerIndex = matrix.findIndex((row) => {
     const joined = rowText(row);
@@ -208,7 +209,7 @@ function parseSimone(matrix: Matrix, fileName: string): ParsedPOLine[] {
   return lines;
 }
 
-function worksheetToMatrix(worksheet: ExcelJS.Worksheet): Matrix {
+function worksheetToMatrix(worksheet: Worksheet): Matrix {
   const matrix: Matrix = [];
   worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
     const values: unknown[] = [];

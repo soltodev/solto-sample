@@ -1,9 +1,10 @@
-import ExcelJS from "exceljs";
+import type { Row, Workbook } from "exceljs";
 import type { PIDocument, WeeklyRow } from "../types";
 import { formatDate } from "./format";
 import { WEEKLY_COLUMNS } from "./weekly";
 
 export async function exportWeeklyXlsx(rows: WeeklyRow[]) {
+  const ExcelJS = await import("exceljs");
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Solto Sample Demo";
   workbook.created = new Date();
@@ -31,6 +32,7 @@ export async function exportWeeklyXlsx(rows: WeeklyRow[]) {
 }
 
 export async function exportPIXlsx(pi: PIDocument) {
+  const ExcelJS = await import("exceljs");
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Solto Sample Demo";
   workbook.created = new Date();
@@ -96,7 +98,7 @@ export async function exportPIXlsx(pi: PIDocument) {
   await downloadWorkbook(workbook, `solto-pi-${pi.poNumber}.xlsx`);
 }
 
-async function downloadWorkbook(workbook: ExcelJS.Workbook, fileName: string) {
+async function downloadWorkbook(workbook: Workbook, fileName: string) {
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -111,7 +113,7 @@ async function downloadWorkbook(workbook: ExcelJS.Workbook, fileName: string) {
   URL.revokeObjectURL(url);
 }
 
-function styleHeader(row: ExcelJS.Row) {
+function styleHeader(row: Row) {
   row.eachCell((cell) => {
     cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
     cell.fill = {

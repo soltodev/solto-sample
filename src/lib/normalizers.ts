@@ -40,6 +40,7 @@ export function normalizeSeason(raw: string) {
 }
 
 export function normalizeDescription(raw: string) {
+  const rawUpper = raw.toUpperCase();
   const cleaned = cleanDescription(raw);
   const upper = cleaned.toUpperCase();
 
@@ -50,8 +51,15 @@ export function normalizeDescription(raw: string) {
     };
   }
 
-  if (upper.includes("COATED TWILL") || upper.includes("SOLTO SIG COATED TWILL")) {
-    if (/\bMD\b/.test(upper)) return { normalized: "MK SIG MD", note: "COATED TWILL MD" };
+  if (
+    rawUpper.includes("COATED TWILL") ||
+    rawUpper.includes("SOLTO SIG") ||
+    upper.includes("COATED TWILL") ||
+    upper.includes("SOLTO SIG")
+  ) {
+    if (/\bMD\b/.test(rawUpper) || /\bMD\b/.test(upper)) {
+      return { normalized: "MK SIG MD", note: "COATED TWILL MD" };
+    }
     return { normalized: "MK SIG SM", note: "COATED TWILL SM" };
   }
 
