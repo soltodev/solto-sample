@@ -1,4 +1,4 @@
-export type POType = "JS_SAMPLE" | "JS_BULK" | "SIMONE";
+export type POType = "JS_SAMPLE" | "JS_BULK" | "SIMONE" | "PDF_MKTE" | "PDF_DEGRE";
 
 export interface ParsedPOFile {
   id: string;
@@ -102,4 +102,5 @@ export interface SampleFile {
   label: string;
   description: string;
   path: string;
+  kind: "xlsx" | "pdf";
 }

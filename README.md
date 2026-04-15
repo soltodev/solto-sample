@@ -25,8 +25,9 @@ npm run preview
 ## 데모 범위
 
 - 지원: JS 샘플 PO, JS 양산 PO, 시몬느 PO SHEET의 `.xlsx` 파싱
+- 지원: 텍스트 기반 PDF 2종 파싱 (`100010...MKTE`, `ISO26...` DEGRE 계약서)
 - 지원: Parsed PO preview, Weekly 행 생성, PI preview, Weekly/PI xlsx 다운로드
-- 제외: PDF/OCR, Supabase 저장, 원본 Weekly 템플릿 전체 복제
+- 제외: 스캔본/OCR PDF, Supabase 저장, 원본 Weekly 템플릿 전체 복제
 
 ## 배포
 

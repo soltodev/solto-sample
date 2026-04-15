@@ -6,6 +6,7 @@ const FACTORY_PATTERNS: Array<{
   { test: /BOYOLALI|JSB/i, factory: "JS BOYOLALI", country: "INDONESIA" },
   { test: /JAKARTA|JSJ/i, factory: "JS JAKARTA", country: "INDONESIA" },
   { test: /JSDG|DONGGUAN/i, factory: "JS DONGGUAN", country: "CHINA" },
+  { test: /DEGRE/i, factory: "DEGRE CAMBODIA", country: "CAMBODIA" },
   { test: /SUPERL/i, factory: "SUPERL CAMBODIA", country: "CAMBODIA" },
   { test: /DLUXE/i, factory: "DLUXE CAMBODIA", country: "CAMBODIA" },
   { test: /VIETNAM/i, factory: "SIMONE VIETNAM", country: "VIETNAM" },
