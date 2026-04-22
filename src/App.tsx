@@ -3,7 +3,6 @@ import type { ChangeEvent, DragEvent } from "react";
 import { exportPIXlsx, exportWeeklyXlsx } from "./lib/excelExport";
 import { formatMoney, formatNumber } from "./lib/format";
 import { generatePIDocuments } from "./lib/pi";
-import { parsePDFBuffer } from "./lib/pdfParser";
 import { parsePOBuffer } from "./lib/poParser";
 import { buildWeeklyRows, summarizeWeekly, WEEKLY_COLUMNS } from "./lib/weekly";
 import type { ParsedPOFile, SampleFile, WeeklyRow } from "./types";
@@ -13,31 +12,16 @@ const SAMPLE_FILES: SampleFile[] = [
     label: "JS 샘플 PO",
     description: "소량 AD 샘플 발주",
     path: "samples/js-sample.xlsx",
-    kind: "xlsx",
   },
   {
     label: "JS 양산 PO",
     description: "FAL26 OUTLET MAINBUY",
     path: "samples/js-bulk.xlsx",
-    kind: "xlsx",
   },
   {
     label: "시몬느 PO SHEET",
     description: "1,000행대 공장 집계표",
     path: "samples/simone.xlsx",
-    kind: "xlsx",
-  },
-  {
-    label: "MKTE PDF",
-    description: "DLUXE PO 텍스트 PDF",
-    path: "samples/mkte-pdf.pdf",
-    kind: "pdf",
-  },
-  {
-    label: "DEGRE PDF",
-    description: "ISO 계약서 PDF",
-    path: "samples/degre-contract-pdf.pdf",
-    kind: "pdf",
   },
 ];
 
@@ -48,7 +32,7 @@ export default function App() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activePI, setActivePI] = useState(0);
   const [isBusy, setIsBusy] = useState(false);
-  const [message, setMessage] = useState("샘플 PO를 불러오거나 실제 xlsx/pdf를 올려 시작하세요.");
+  const [message, setMessage] = useState("샘플 PO를 불러오거나 실제 xlsx를 올려 시작하세요.");
 
   const allLines = useMemo(() => parsedFiles.flatMap((file) => file.lines), [parsedFiles]);
   const selectedRows = useMemo(
@@ -60,9 +44,9 @@ export default function App() {
   const weeklySummary = useMemo(() => summarizeWeekly(weeklyRows), [weeklyRows]);
 
   async function handleFiles(files: FileList | File[]) {
-    const list = Array.from(files).filter((file) => /\.(xlsx|pdf)$/i.test(file.name));
+    const list = Array.from(files).filter((file) => file.name.endsWith(".xlsx"));
     if (list.length === 0) {
-      setMessage("xlsx 또는 텍스트 기반 pdf 파일만 처리할 수 있습니다.");
+      setMessage("xlsx 파일만 처리할 수 있습니다.");
       return;
     }
 
@@ -71,7 +55,7 @@ export default function App() {
 
     try {
       const parsed = await Promise.all(
-        list.map(async (file) => parseDocumentBuffer(await file.arrayBuffer(), file.name)),
+        list.map(async (file) => parsePOBuffer(await file.arrayBuffer(), file.name)),
       );
       appendParsed(parsed);
       setMessage(`${parsed.reduce((total, file) => total + file.lineCount, 0)}개 행을 파싱했습니다.`);
@@ -90,7 +74,7 @@ export default function App() {
     try {
       const response = await fetch(`${import.meta.env.BASE_URL}${sample.path}`);
       const buffer = await response.arrayBuffer();
-      const parsed = await parseDocumentBuffer(buffer, `${sample.label}.${sample.kind}`);
+      const parsed = await parsePOBuffer(buffer, `${sample.label}.xlsx`);
       appendParsed([parsed]);
       setMessage(`${sample.label}: ${parsed.lineCount}개 행을 Weekly로 보냈습니다.`);
     } catch (error) {
@@ -164,8 +148,8 @@ export default function App() {
           <p className="step-label">01 / PO Intake</p>
           <h2>샘플 PO를 읽고, 실제 xlsx도 바로 올립니다.</h2>
           <p>
-            JS 샘플, JS 양산, 시몬느 PO SHEET, 텍스트 PDF 계약서를 같은 데이터 모델로 모아
-            Weekly와 PI에 넘깁니다.
+            JS 샘플, JS 양산, 시몬느 PO SHEET를 같은 데이터 모델로 모아 Weekly와 PI에
+            넘깁니다.
           </p>
           <div className="sample-actions">
             {SAMPLE_FILES.map((sample) => (
@@ -187,23 +171,23 @@ export default function App() {
           className="dropzone"
           onDragOver={(event) => event.preventDefault()}
           onDrop={handleDrop}
-          aria-label="PO xlsx 또는 pdf 업로드"
+          aria-label="PO xlsx 업로드"
         >
           <img
             src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=900&q=80"
             alt="정리된 원단 샘플"
           />
           <div>
-            <p className="step-label">xlsx / pdf upload</p>
+            <p className="step-label">xlsx upload</p>
             <h2>PO 파일 놓기</h2>
-            <p>xlsx와 텍스트 기반 pdf를 여러 개 올릴 수 있습니다.</p>
+            <p>여러 파일을 한 번에 올릴 수 있습니다.</p>
             <button type="button" onClick={() => inputRef.current?.click()} disabled={isBusy}>
               파일 선택
             </button>
             <input
               ref={inputRef}
               type="file"
-              accept=".xlsx,.pdf"
+              accept=".xlsx"
               multiple
               onChange={handleInput}
               hidden
@@ -458,11 +442,6 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function parseDocumentBuffer(buffer: ArrayBuffer, fileName: string) {
-  if (/\.pdf$/i.test(fileName)) return parsePDFBuffer(buffer, fileName);
-  return parsePOBuffer(buffer, fileName);
-}
-
 function FragmentedPIItem({ item }: { item: ReturnType<typeof generatePIDocuments>[number]["items"][number] }) {
   return (
     <>
@@ -503,7 +482,5 @@ function renderWeeklyCell(row: WeeklyRow, key: keyof WeeklyRow) {
 function labelPOType(type: string) {
   if (type === "JS_SAMPLE") return "Type A / JS 샘플";
   if (type === "JS_BULK") return "Type B / JS 양산";
-  if (type === "PDF_MKTE") return "PDF / MKTE";
-  if (type === "PDF_DEGRE") return "PDF / DEGRE 계약서";
   return "Type C / 시몬느";
 }
